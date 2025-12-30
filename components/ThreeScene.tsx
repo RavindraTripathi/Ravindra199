@@ -1,5 +1,5 @@
 
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Points, PointMaterial, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -13,8 +13,10 @@ const Rig = ({ page }: { page: string }) => {
   const vec = new THREE.Vector3();
 
   return useFrame(() => {
-    // Basic mouse movement parallax
-    camera.position.lerp(vec.set(mouse.x * 2, mouse.y * 1, 10), 0.05);
+    // Basic mouse movement parallax - safely check for mouse availability
+    if (mouse) {
+      camera.position.lerp(vec.set(mouse.x * 2, mouse.y * 1, 10), 0.05);
+    }
     
     // Page specific camera adjustments
     if (page === 'about') {
@@ -45,8 +47,10 @@ const ParticleField = () => {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    pointsRef.current.rotation.y = time * 0.02;
-    pointsRef.current.rotation.z = time * 0.01;
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y = time * 0.02;
+      pointsRef.current.rotation.z = time * 0.01;
+    }
   });
 
   return (
@@ -68,8 +72,10 @@ const FloatingShapes = ({ page }: { page: string }) => {
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
-    groupRef.current.rotation.y = time * 0.1;
-    groupRef.current.position.y = Math.sin(time * 0.5) * 0.5;
+    if (groupRef.current) {
+      groupRef.current.rotation.y = time * 0.1;
+      groupRef.current.position.y = Math.sin(time * 0.5) * 0.2;
+    }
   });
 
   return (
@@ -98,10 +104,15 @@ const FloatingShapes = ({ page }: { page: string }) => {
 
 const ThreeScene: React.FC<ThreeSceneProps> = ({ page }) => {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none">
-      <Canvas dpr={[1, 2]}>
+    <div className="fixed inset-0 z-0 pointer-events-none bg-[#030712]">
+      <Canvas 
+        dpr={[1, 2]} 
+        gl={{ antialias: true, alpha: true }}
+        onCreated={({ gl }) => {
+          gl.setClearColor('#030712', 1);
+        }}
+      >
         <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={50} />
-        <color attach="background" args={['#030712']} />
         <ambientLight intensity={0.4} />
         <pointLight position={[10, 10, 10]} intensity={1.5} color="#3b82f6" />
         <pointLight position={[-10, -10, -10]} intensity={0.5} color="#6366f1" />
